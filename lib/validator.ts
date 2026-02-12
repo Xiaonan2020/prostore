@@ -19,4 +19,11 @@ export const insertProductSchema = z.object({
   isFeatured: z.boolean(),
   banner: z.string().nullable(),
   price: currency,
+})
+
+// Schema for signing in a user
+// 用户登录模式
+export const signInFormSchema = z.object({
+  email: z.email('Invalid email address').min(8, 'Email must be at least 8 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
