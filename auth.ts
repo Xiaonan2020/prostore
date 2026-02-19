@@ -74,7 +74,36 @@ export const config = {
     async jwt({ token, user, trigger, session }: any) {
       // Assign user fields to token
       if (user) {
+        // Assign user properties to the token
+        // 将用户属性分配给 token
+        token.id = user.id;
         token.role = user.role;
+
+        if (trigger === "signIn" || trigger === "signUp") {
+          const cookiesObject = await cookies();
+          const sessionCartId = cookiesObject.get("sessionCartId")?.value;
+
+          if (sessionCartId) {
+            const sessionCart = await prisma.cart.findFirst({
+              where: { sessionCartId },
+            });
+
+            if (sessionCart) {
+              // Overwrite any existing user cart
+              // 覆盖任何现有的用户购物车
+              await prisma.cart.deleteMany({
+                where: { userId: user.id },
+              });
+
+              // Assign the guest cart to the logged-in user
+              // 将访客购物车分配给已登录用户
+              await prisma.cart.update({
+                where: { id: sessionCart.id },
+                data: { userId: user.id },
+              });
+            }
+          }
+        }
 
         // If user has no name, use email as their default name
         if (user.name === "NO_NAME") {
@@ -96,6 +125,23 @@ export const config = {
       return token;
     },
     authorized({ request, auth }: any) {
+      const protectedPaths = [
+        /\/shipping-address/,
+        /\/payment-method/,
+        /\/place-order/,
+        /\/profile/,
+        /\/user\/(.*)/,
+        /\/order\/(.*)/,
+        /\/admin/,
+      ];
+      // Get pathname from the req URL object
+      // 从请求 URL 对象获取路径名
+      const { pathname } = request.nextUrl;
+
+      // Check if user is not authenticated and on a protected path
+      // 检查用户是否未认证且正在访问受保护路径
+      if (!auth && protectedPaths.some((p) => p.test(pathname))) return false;
+
       // Check for cart cookie
       if (!request.cookies.get("sessionCartId")) {
         // Generate cart cookie

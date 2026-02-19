@@ -16,11 +16,13 @@ const ProductDetailsPage = async (props: {
   const { slug } = params;
 
   const product = await getProductBySlug(slug);
+  // console.log("----product----", product);
   if (!product) notFound();
   // console.log(product);
 
 
   const cart = await getMyCart();
+  // console.log("----cart----", cart);
   return (
     <>
       <section>

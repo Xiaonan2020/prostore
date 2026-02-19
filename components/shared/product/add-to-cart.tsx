@@ -9,11 +9,13 @@ import { useTransition } from "react";
 import { Plus, Minus, Loader } from "lucide-react";
 const AddToCart = ({ cart, item }: { cart?: Cart; item: CartItem }) => {
   const router = useRouter();
+  // console.log('cart ', cart);
   // console.log('item ', item);
   const [isPending, startTransition] = useTransition();
   const handleAddToCart = async () => {
     startTransition(async () => {
       // Execute the addItemToCart action
+      // console.log("----item----", item);
       const res = await addItemToCart(item);
 
       // Display appropriate toast message based on the result

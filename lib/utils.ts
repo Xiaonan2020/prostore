@@ -13,7 +13,7 @@ export function convertToPlainObject<T>(object: T): T {
 export function formatNumberWithDecimal(num: number): string {
   const [int, decimal] = num.toString().split(".");
 
-  return decimal ? `${int}.${decimal.slice(0, 2)}` : `${int}.00`;
+  return decimal ? `${int}.${decimal.padEnd(2, '0')}` : `${int}.00`;;
 }
 
 // Format Errors
@@ -60,3 +60,26 @@ export const round2 = (value: number | string) => {
     throw new Error('value is not a number nor a string');
   }
 };
+
+
+// 格式化 Prisma Decimal 为两位小数字符串
+export function formatDecimal(value:  number | string): string {
+  return Number(value).toFixed(2);
+}
+
+const CURRENCY_FORMATTER = new Intl.NumberFormat('en-US', {
+  currency: 'USD',
+  style: 'currency',
+  minimumFractionDigits: 2,
+});
+
+// Format currency
+export function formatCurrency(amount: number | string | null) {
+  if (typeof amount === 'number') {
+    return CURRENCY_FORMATTER.format(amount);
+  } else if (typeof amount === 'string') {
+    return CURRENCY_FORMATTER.format(Number(amount));
+  } else {
+    return 'NaN';
+  }
+}

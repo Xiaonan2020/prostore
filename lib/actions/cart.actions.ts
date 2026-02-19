@@ -41,6 +41,8 @@ export async function addItemToCart(
 
     // Get cart from database
     const cart = await getMyCart();
+    // console.log('----data----', data);
+    // console.log('----cart----', cart);
     const item = cartItemSchema.parse(data);
 
     // Find product in database
@@ -49,7 +51,7 @@ export async function addItemToCart(
     });
     if (!product) throw new Error("Product not found");
     // Testing
-    console.log({
+    console.log('cart.actions.ts', {
       "Session Cart ID": sessionCartId,
       "User ID": userId,
       "Item Requested": item,
@@ -223,3 +225,5 @@ export async function removeItemFromCart(productId: string) {
     return { success: false, message: formatError(error) };
   }
 }
+
+
