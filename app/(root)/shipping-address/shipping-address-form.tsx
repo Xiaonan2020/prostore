@@ -40,7 +40,7 @@ const ShippingAddressForm = ({
   const onSubmit: SubmitHandler<z.infer<typeof shippingAddressSchema>> = async (
     values
   ) => {
-    console.log(values);
+    // console.log(values);
     startTransition(async () => {
       const res = await updateUserAddress(values);
 

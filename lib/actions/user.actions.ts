@@ -3,17 +3,20 @@
 // import { isRedirectError } from 'next/dist/client/components/redirect';
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { signIn, signOut } from "@/auth";
-import { signInFormSchema, signUpFormSchema } from "../validator";
+import {
+  signInFormSchema,
+  signUpFormSchema,
+  paymentMethodSchema,
+} from "../validator";
 import { hashSync } from "bcrypt-ts-edge"; // 用于密码哈希的库
 import { prisma } from "@/db/prisma";
 
 import { redirect } from "next/navigation";
-import { formatError } from '../utils';
+import { formatError } from "../utils";
 import { shippingAddressSchema } from "../validator";
 import { ShippingAddress } from "@/types";
 import { auth } from "@/auth";
-
-
+import { z } from 'zod';
 // Sign in the user with credentials
 // 使用凭据登录用户
 export async function signInWithCredentials(
@@ -38,8 +41,6 @@ export async function signInWithCredentials(
     return { success: false, message: "Invalid email or password" };
   }
 }
-
-
 
 // Sign the user out
 // 退出用户
@@ -85,12 +86,12 @@ export async function signUp(prevState: unknown, formData: FormData) {
     });
 
     return { success: true, message: "User created successfully" };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // console.log("错误名称:", error.name);
     // console.log("错误消息:", error.message);
     // console.log("错误代码:", error.code);
-    // // console.log("错误详情:", error.errors); 
+    // // console.log("错误详情:", error.errors);
     // console.log("元数据:", error.meta);
     // console.log("完整错误对象:", error); // 查看所有属性
     // console.log("错误详情:", error.issues);
@@ -113,7 +114,7 @@ export async function getUserById(userId: string) {
     where: { id: userId },
   });
 
-  if (!user) throw new Error('User not found');
+  if (!user) throw new Error("User not found");
   return user;
 }
 
@@ -123,12 +124,12 @@ export async function updateUserAddress(data: ShippingAddress) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    if (!userId) throw new Error('User not authenticated');
+    if (!userId) throw new Error("User not authenticated");
     const currentUser = await prisma.user.findFirst({
       where: { id: userId },
     });
 
-    if (!currentUser) throw new Error('User not found');
+    if (!currentUser) throw new Error("User not found");
 
     const address = shippingAddressSchema.parse(data);
 
@@ -139,12 +140,38 @@ export async function updateUserAddress(data: ShippingAddress) {
 
     return {
       success: true,
-      message: 'User updated successfully',
+      message: "User updated successfully",
     };
   } catch (error) {
     return { success: false, message: formatError(error) };
   }
 }
 
+// Update user's payment method
+export async function updateUserPaymentMethod(
+  data: z.infer<typeof paymentMethodSchema>
+) {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("User not authenticated");
+    const currentUser = await prisma.user.findFirst({
+      where: { id: userId },
+    });
+    if (!currentUser) throw new Error('User not found');
 
+    const paymentMethod = paymentMethodSchema.parse(data);
 
+    await prisma.user.update({
+      where: { id: currentUser.id },
+      data: { paymentMethod: paymentMethod.type },
+    });
+
+    return {
+      success: true,
+      message: 'User updated successfully',
+    };
+  } catch (error) {
+    return { success: false, message: formatError(error) };
+  }
+}

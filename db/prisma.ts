@@ -12,7 +12,6 @@ neonConfig.webSocketConstructor = ws;
 // Get database connection string from environment variables
 const connectionString = `${process.env.DATABASE_URL}`;
 
-
 // 使用提供的连接字符串创建一个新的连接池，允许多个并发连接
 // Creates a new connection pool using the provided connection string, allowing multiple concurrent connections.
 // const pool = new Pool({ connectionString });
@@ -39,6 +38,67 @@ export const prisma = new PrismaClient({ adapter }).$extends({
           // 将 Decimal 类型的 rating 转换为字符串
           // Convert Decimal type rating to string
           return product.rating.toString();
+        },
+      },
+    },
+
+    cart: {
+      itemsPrice: {
+        needs: { itemsPrice: true },
+        compute(cart) {
+          return cart.itemsPrice.toString();
+        },
+      },
+      shippingPrice: {
+        needs: { shippingPrice: true },
+        compute(cart) {
+          return cart.shippingPrice.toString();
+        },
+      },
+      taxPrice: {
+        needs: { taxPrice: true },
+        compute(cart) {
+          return cart.taxPrice.toString();
+        },
+      },
+      totalPrice: {
+        needs: { totalPrice: true },
+        compute(cart) {
+          return cart.totalPrice.toString();
+        },
+      },
+    },
+
+    order: {
+      itemsPrice: {
+        needs: { itemsPrice: true },
+        compute(order) {
+          return order.itemsPrice.toString();
+        },
+      },
+      shippingPrice: {
+        needs: { shippingPrice: true },
+        compute(order) {
+          return order.shippingPrice.toString();
+        },
+      },
+      taxPrice: {
+        needs: { taxPrice: true },
+        compute(order) {
+          return order.taxPrice.toString();
+        },
+      },
+      totalPrice: {
+        needs: { totalPrice: true },
+        compute(order) {
+          return order.totalPrice.toString();
+        },
+      },
+    },
+    orderItem: {
+      price: {
+        compute(orderItem) {
+          return orderItem.price.toString();
         },
       },
     },

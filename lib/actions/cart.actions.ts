@@ -51,13 +51,13 @@ export async function addItemToCart(
     });
     if (!product) throw new Error("Product not found");
     // Testing
-    console.log('cart.actions.ts', {
-      "Session Cart ID": sessionCartId,
-      "User ID": userId,
-      "Item Requested": item,
-      "Product Found": product,
-      Cart: cart,
-    });
+    // console.log('cart.actions.ts', {
+    //   "Session Cart ID": sessionCartId,
+    //   "User ID": userId,
+    //   "Item Requested": item,
+    //   "Product Found": product,
+    //   Cart: cart,
+    // });
     if (!cart) {
       // Create new cart object
       const newCart = insertCartSchema.parse({
