@@ -15,8 +15,22 @@ import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
 import { Order } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
-
-const OrderDetailsTable = ({ order }: { order: Order }) => {
+import {
+  PayPalButtons,
+  PayPalScriptProvider,
+  usePayPalScriptReducer,
+} from "@paypal/react-paypal-js";
+import {
+  approvePayPalOrder,
+  createPayPalOrder,
+} from "@/lib/actions/order.actions";
+const OrderDetailsTable = ({
+  order,
+  paypalClientId,
+}: {
+  order: Order;
+  paypalClientId: string;
+}) => {
   const {
     shippingAddress,
     orderItems,
@@ -30,7 +44,43 @@ const OrderDetailsTable = ({ order }: { order: Order }) => {
     isDelivered,
     deliveredAt,
   } = order;
+  // Checks the loading status of the PayPal script
+  function PrintLoadingState() {
+    const [{ isPending, isRejected }] = usePayPalScriptReducer();
+    let status = "";
+    if (isPending) {
+      status = "Loading PayPal...";
+    } else if (isRejected) {
+      status = "Error in loading PayPal.";
+    }
+    return status;
+  }
 
+  // Creates a PayPal order
+  const handleCreatePayPalOrder = async () => {
+    const res = await createPayPalOrder(order.id);
+
+    if (!res.success)
+      toast.error(res.message, {
+        style: { color: "red" },
+      });
+
+    return res.data;
+  };
+
+  // Approves a PayPal order
+  const handleApprovePayPalOrder = async (data: { orderID: string }) => {
+    const res = await approvePayPalOrder(order.id, data);
+    if (!res.success) {
+      toast.error(res.message, {
+        style: { color: "red" },
+      });
+    } else {
+      toast.success(res.message, {
+        style: { color: "green" },
+      });
+    }
+  };
   return (
     <>
       <h1 className="py-4 text-2xl"> Order {formatId(order.id)}</h1>
@@ -41,7 +91,7 @@ const OrderDetailsTable = ({ order }: { order: Order }) => {
               <h2 className="text-xl pb-4">Payment Method</h2>
               <p>{paymentMethod}</p>
               {isPaid ? (
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="bg-green-500 text-white hover:bg-green-600 border-transparent">
                   Paid at {formatDateTime(paidAt!).dateTime}
                 </Badge>
               ) : (
@@ -97,9 +147,7 @@ const OrderDetailsTable = ({ order }: { order: Order }) => {
                       <TableCell>
                         <span className="px-2">{item.qty}</span>
                       </TableCell>
-                      <TableCell >
-                        {formatCurrency(item.price)}
-                      </TableCell>
+                      <TableCell>{formatCurrency(item.price)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -127,6 +175,18 @@ const OrderDetailsTable = ({ order }: { order: Order }) => {
                 <div>Total</div>
                 <div>{formatCurrency(totalPrice)}</div>
               </div>
+
+              {!isPaid && paymentMethod === "PayPal" && (
+                <div>
+                  <PayPalScriptProvider options={{ clientId: paypalClientId }}>
+                    <PrintLoadingState />
+                    <PayPalButtons
+                      createOrder={handleCreatePayPalOrder}
+                      onApprove={handleApprovePayPalOrder}
+                    />
+                  </PayPalScriptProvider>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
