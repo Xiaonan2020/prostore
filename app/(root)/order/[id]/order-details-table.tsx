@@ -23,13 +23,19 @@ import {
 import {
   approvePayPalOrder,
   createPayPalOrder,
+  deliverOrder,
+  updateOrderToPaidByCOD,
 } from "@/lib/actions/order.actions";
+import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
 const OrderDetailsTable = ({
   order,
   paypalClientId,
+  isAdmin,
 }: {
   order: Order;
   paypalClientId: string;
+  isAdmin: boolean;
 }) => {
   const {
     shippingAddress,
@@ -81,6 +87,65 @@ const OrderDetailsTable = ({
       });
     }
   };
+
+  // Button To mark the order as paid
+  const MarkAsPaidButton = () => {
+    const [isPending, startTransition] = useTransition();
+    return (
+      <Button
+        className="w-full bg-cyan-600 hover:bg-cyan-800 text-white rounded-lg"
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await updateOrderToPaidByCOD(order.id);
+            if (!res.success) {
+              toast.error(res.message, {
+                style: { color: "red" },
+              });
+            } else {
+              toast.success(res.message, {
+                style: { color: "green" },
+              });
+            }
+          })
+        }
+      >
+        {isPending ? "processing..." : "Mark As Paid"}
+      </Button>
+    );
+  };
+
+  // Button To mark the order as delivered
+  const MarkAsDeliveredButton = () => {
+    const [isPending, startTransition] = useTransition();
+
+    return (
+      <Button
+        className="w-full bg-cyan-600 hover:bg-cyan-800 text-white rounded-lg"
+        // variant="secondary"
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const res = await deliverOrder(order.id);
+            if (!res.success) {
+              toast.error(res.message, {
+                style: { color: "red" },
+              });
+            } else {
+              toast.success(res.message, {
+                style: { color: "green" },
+              });
+            }
+          })
+        }
+      >
+        {isPending ? "processing..." : "Mark As Delivered"}
+      </Button>
+    );
+  };
+
   return (
     <>
       <h1 className="py-4 text-2xl"> Order {formatId(order.id)}</h1>
@@ -91,7 +156,10 @@ const OrderDetailsTable = ({
               <h2 className="text-xl pb-4">Payment Method</h2>
               <p>{paymentMethod}</p>
               {isPaid ? (
-                <Badge variant="secondary" className="bg-green-500 text-white hover:bg-green-600 border-transparent">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-500 text-white hover:bg-green-600 border-transparent"
+                >
                   Paid at {formatDateTime(paidAt!).dateTime}
                 </Badge>
               ) : (
@@ -108,7 +176,10 @@ const OrderDetailsTable = ({
                 {shippingAddress.postalCode}, {shippingAddress.country}{" "}
               </p>
               {isDelivered ? (
-                <Badge variant="secondary">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-500 text-white hover:bg-green-600 border-transparent"
+                >
                   Delivered at {formatDateTime(deliveredAt!).dateTime}
                 </Badge>
               ) : (
@@ -187,6 +258,10 @@ const OrderDetailsTable = ({
                   </PayPalScriptProvider>
                 </div>
               )}
+              {isAdmin && !isPaid && paymentMethod === "CashOnDelivery" && (
+                <MarkAsPaidButton />
+              )}
+              {isAdmin && isPaid && !isDelivered && <MarkAsDeliveredButton />}
             </CardContent>
           </Card>
         </div>

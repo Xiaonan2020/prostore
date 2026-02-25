@@ -1,3 +1,7 @@
+// import { auth } from "@/auth";
+import { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth-guard";
+import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -6,25 +10,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getMyOrders } from "@/lib/actions/order.actions";
-import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
-import { Metadata } from "next";
 import Link from "next/link";
 import Pagination from "@/components/shared/pagination";
-
+import { Button } from "@/components/ui/button";
+import { deleteOrder, getAllOrders } from "@/lib/actions/order.actions";
+import DeleteDialog from "@/components/shared/delete-dialog";
 export const metadata: Metadata = {
-  title: "My Orders",
+  title: "Admin Orders",
 };
 
 const OrdersPage = async (props: {
   searchParams: Promise<{ page: string }>;
 }) => {
-  const { page } = await props.searchParams;
-  const orders = await getMyOrders({
-    page: Number(page) || 1,
+  const session = await requireAdmin();
+  const { page = "1" } = await props.searchParams;
+
+  //   const session = await auth();
+  if (session?.user.role !== "admin")
+    throw new Error("admin permission required");
+
+  const orders = await getAllOrders({
+    page: Number(page),
   });
 
-  // console.log(orders);
+  //   console.log(orders);
 
   return (
     <div className="space-y-2">
@@ -70,9 +79,11 @@ const OrdersPage = async (props: {
                     : "Not Delivered"}
                 </TableCell>
                 <TableCell className="space-x-1">
-                  <Link href={`/order/${order.id}`}>
-                    <span className="px-2">Details</span>
-                  </Link>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/order/${order.id}`}>Details</Link>
+                  </Button>
+                  {/* DELETE */}
+                  <DeleteDialog id={order.id} action={deleteOrder} />
                 </TableCell>
               </TableRow>
             ))}
