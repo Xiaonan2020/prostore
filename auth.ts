@@ -124,6 +124,7 @@ export const config = {
 
       return token;
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     authorized({ request, auth }: any) {
       const protectedPaths = [
         /\/shipping-address/,
