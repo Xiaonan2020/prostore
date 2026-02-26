@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatId } from "@/lib/utils";
 
-import { getAllProducts, deleteProduct } from '@/lib/actions/product.actions';
-import DeleteDialog from '@/components/shared/delete-dialog';
+import { getAllProducts, deleteProduct } from "@/lib/actions/product.actions";
+import DeleteDialog from "@/components/shared/delete-dialog";
 const AdminProductsPage = async (props: {
   searchParams: Promise<{
     page: string;
@@ -36,7 +36,20 @@ const AdminProductsPage = async (props: {
   return (
     <div className="space-y-2">
       <div className="flex-between">
-        <h1 className="h2-bold">Products</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="h2-bold">Products</h1>
+
+          {searchText && (
+            <div>
+              Filtered by <i>&quot;{searchText}&quot;</i>{" "}
+              <Link href={`/admin/products`}>
+                <Button variant="outline" size="sm">
+                  Remove Filter
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
         <Button asChild variant="default">
           <Link href="/admin/products/create">Create Product</Link>
         </Button>
@@ -78,7 +91,7 @@ const AdminProductsPage = async (props: {
         </Table>
         {products?.totalPages && products.totalPages > 1 && (
           <div className="flex mt-5 justify-end">
-          <Pagination page={page} totalPages={products.totalPages} />
+            <Pagination page={page} totalPages={products.totalPages} />
           </div>
         )}
       </div>

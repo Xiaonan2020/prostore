@@ -28,10 +28,8 @@ export const insertProductSchema = z.object({
 
 // Schema for updating a product
 export const updateProductSchema = insertProductSchema.extend({
-  id: z.string().min(1, 'Id is required'),
+  id: z.string().min(1, "Id is required"),
 });
-
-
 
 // Schema for signing in a user
 // 用户登录模式
@@ -130,5 +128,13 @@ export const paymentResultSchema = z.object({
 // Update Profile Schema
 export const updateProfileSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
+  // name: z.string().min(3, "Name must be at least 3 characters").nullable(),
   email: z.string().min(3, "Email must be at least 3 characters"),
+});
+
+// Update User Schema
+// 更新用户模式
+export const updateUserSchema = updateProfileSchema.extend({
+  id: z.string().min(1, "Id is required"),
+  role: z.string().min(1, "Role is required"),
 });

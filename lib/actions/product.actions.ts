@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 // Get the latest products
 import { insertProductSchema, updateProductSchema } from '../validator';
 import { z } from "zod";
+import { Prisma } from "../generated/prisma/client";
 export async function getLatestProducts() {
   //   const adapter = new PrismaPg({ connectionString });
   //   const prisma = new PrismaClient({ adapter });
@@ -53,8 +54,22 @@ export async function getAllProducts({
   page: number;
   category?: string;
 }) {
+
+    // Query filter
+  const queryFilter: Prisma.ProductWhereInput =
+    query && query !== 'all'
+      ? {
+          name: {
+            contains: query,
+            mode: 'insensitive',
+          } as Prisma.StringFilter,
+        }
+      : {};
   const data = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
+    where:{
+      ...queryFilter,
+    },
     skip: (page - 1) * limit,
     take: limit,
   });

@@ -347,16 +347,33 @@ export async function getOrderSummary() {
   };
 }
 
-// Get All Orders (Admin)
+// Get all orders
 export async function getAllOrders({
   limit = PAGE_SIZE,
   page,
+  query,
 }: {
   limit?: number;
   page: number;
+  query: string;
 }) {
+  const queryFilter: Prisma.OrderWhereInput =
+    query && query !== 'all'
+      ? {
+          user: {
+            name: {
+              contains: query,
+              mode: 'insensitive',
+            } as Prisma.StringFilter,
+          },
+        }
+      : {};
+
   const data = await prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
+    where: {
+      ...queryFilter,
+    },
+    orderBy: { createdAt: 'desc' },
     take: limit,
     skip: (page - 1) * limit,
     include: { user: { select: { name: true } } },
@@ -369,7 +386,6 @@ export async function getAllOrders({
     totalPages: Math.ceil(dataCount / limit),
   };
 }
-
 // Delete Order
 export async function deleteOrder(id: string) {
   try {
