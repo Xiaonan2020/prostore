@@ -63,14 +63,15 @@ const StripePayment = ({
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="text-xl">Stripe Checkout</div>
-        {errorMessage && <div className="text-destructive">{errorMessage}</div>}
         <PaymentElement />
         <div>
           <LinkAuthenticationElement
             onChange={(e) => setEmail(e.value.email)}
           />
         </div>
+        {errorMessage && <div className="text-destructive">{errorMessage}</div>}
         <Button
+        type="submit"
           className="w-full"
           size="lg"
           disabled={stripe == null || elements == null || isLoading}

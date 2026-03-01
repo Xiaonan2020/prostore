@@ -11,9 +11,10 @@ import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "../utils";
 import { revalidatePath } from "next/cache";
 import { paypal } from "../paypal";
-import { CartItem, PaymentResult } from "@/types";
 import { PAGE_SIZE } from "../constants";
 import { Prisma } from "@/lib/generated/prisma/client";
+import { CartItem, PaymentResult, ShippingAddress } from "@/types";
+import { sendPurchaseReceipt } from "@/email";
 // Create Order
 export const createOrder = async () => {
   try {
@@ -260,6 +261,20 @@ export async function updateOrderToPaid({
   if (!updatedOrder) {
     throw new Error("Order not found");
   }
+  // Send the purchase receipt email with the updated order
+  // 使用更新后的订单发送购买收据邮件
+  // console.log("updatedOrder.user.email:", updatedOrder.user.email);
+  sendPurchaseReceipt({
+    order: {
+      ...updatedOrder,
+      user: {
+        ...updatedOrder.user,
+        name: updatedOrder.user.name || "Customer",
+      },
+      shippingAddress: updatedOrder.shippingAddress as ShippingAddress,
+      paymentResult: updatedOrder.paymentResult as PaymentResult,
+    },
+  });
 }
 
 // Get User Orders
@@ -358,12 +373,12 @@ export async function getAllOrders({
   query: string;
 }) {
   const queryFilter: Prisma.OrderWhereInput =
-    query && query !== 'all'
+    query && query !== "all"
       ? {
           user: {
             name: {
               contains: query,
-              mode: 'insensitive',
+              mode: "insensitive",
             } as Prisma.StringFilter,
           },
         }
@@ -373,7 +388,7 @@ export async function getAllOrders({
     where: {
       ...queryFilter,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: limit,
     skip: (page - 1) * limit,
     include: { user: { select: { name: true } } },
