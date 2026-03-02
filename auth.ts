@@ -1,20 +1,18 @@
 import { compareSync } from "bcrypt-ts-edge";
-import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { prisma } from "@/db/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
+import { authConfig } from './auth.config';
 export const config = {
   pages: {
     signIn: "/sign-in",
     error: "/sign-in",
   },
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   adapter: PrismaAdapter(prisma),
@@ -124,50 +122,8 @@ export const config = {
 
       return token;
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    authorized({ request, auth }: any) {
-      const protectedPaths = [
-        /\/shipping-address/,
-        /\/payment-method/,
-        /\/place-order/,
-        /\/profile/,
-        /\/user\/(.*)/,
-        /\/order\/(.*)/,
-        /\/admin/,
-      ];
-      // Get pathname from the req URL object
-      // 从请求 URL 对象获取路径名
-      const { pathname } = request.nextUrl;
-
-      // Check if user is not authenticated and on a protected path
-      // 检查用户是否未认证且正在访问受保护路径
-      if (!auth && protectedPaths.some((p) => p.test(pathname))) return false;
-
-      // Check for cart cookie
-      if (!request.cookies.get("sessionCartId")) {
-        // Generate cart cookie
-        const sessionCartId = crypto.randomUUID();
-
-        // Clone the request headers
-        const newRequestHeaders = new Headers(request.headers);
-
-        // Create a new response and add the new headers
-        const response = NextResponse.next({
-          request: {
-            headers: newRequestHeaders,
-          },
-        });
-
-        // Set the newly generated sessionCartId in the response cookies
-        response.cookies.set("sessionCartId", sessionCartId);
-
-        // Return the response with the sessionCartId set
-        return response;
-      } else {
-        return true;
-      }
-    },
+    ...authConfig.callbacks,
   },
-} satisfies NextAuthConfig;
+} 
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);
